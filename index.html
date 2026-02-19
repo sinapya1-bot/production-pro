@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production Pro</title>
+<link rel="manifest" href="manifest.json">
+
+<style>
+body {
+    background: #0f0f0f;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
+header { text-align:center; margin-bottom:20px; }
+input, select, button {
+    width:100%; margin-top:10px; padding:12px; border-radius:8px;
+    border: none; font-size:16px;
+}
+input, select { background:#111; color:#fff; border:1px solid #333; }
+button { background:#00e5ff; color:#000; font-weight:bold; }
+canvas { margin-top:20px; background:#111; border-radius:10px; }
+</style>
+</head>
+<body>
+
+<header><h1>Production Pro</h1></header>
+
+<label>Time Value</label>
+<input type="number" id="timeValue" placeholder="e.g. 60">
+
+<label>Unit of Time</label>
+<select id="timeUnit">
+  <option value="minutes">Minutes</option>
+  <option value="hours">Hours</option>
+</select>
+
+<label>Seconds per Shot</label>
+<input type="number" id="secPerShot" placeholder="e.g. 12">
+
+<label>Units Per Shot (ضرب)</label>
+<input type="number" id="unitsPerShot" value="1">
+
+<label>Units per Package</label>
+<input type="number" id="packageSize" placeholder="90 or 0">
+
+<button onclick="generateData()">Generate Chart</button>
+
+<canvas id="productionChart" width="400" height="200"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let ctx = document.getElementById('productionChart').getContext('2d');
+let prodChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: [], datasets: [{
+        label: 'Production Over Time',
+        borderColor: '#00e5ff',
+        backgroundColor: 'rgba(0,229,255,0.2)',
+        data: []
+    }] },
+    options: { scales: { x: { title: { display:true, text:'Time' } },
+        y: { title: { display:true, text:'Units' } }
+    } }
+});
+
+function generateData() {
+    let timeVal = parseFloat(document.getElementById('timeValue').value);
+    let timeUnit = document.getElementById('timeUnit').value;
+    let sec = parseFloat(document.getElementById('secPerShot').value);
+    let units = parseFloat(document.getElementById('unitsPerShot').value)||1;
+    let packSize = parseFloat(document.getElementById('packageSize').value)||0;
+
+    if(!timeVal||!sec) return;
+
+    let totalMinutes = timeUnit === 'hours' ? timeVal*60 : timeVal;
+    let dataPoints = [];
+    let labels = [];
+
+    for(let m=0;m<=totalMinutes;m+=1){
+        let totalSec = m*60;
+        let shots = totalSec / sec;
+        let totalUnits = Math.floor(shots*units);
+        dataPoints.push(totalUnits);
+        labels.push(m.toString());
+    }
+
+    prodChart.data.labels = labels;
+    prodChart.data.datasets[0].data = dataPoints;
+    prodChart.update();
+
+    if(packSize>0){
+        let last = dataPoints[dataPoints.length-1];
+        let fullPackages = Math.floor(last / packSize);
+        alert(`Final Production: ${last} units (Packages: ${fullPackages})`);
+    }
+}
+</script>
+
+</body>
+</html>
